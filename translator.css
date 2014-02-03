@@ -1,0 +1,39 @@
+/* Togglers and translatable elements */
+.translator-toggler, .translator-toggler:hover { color: #fff; display: none; position: absolute; text-decoration: none; }
+
+.translator-toggler span { background: #3A87AD; border-radius: 0 0 3px 3px; display: inline-block; font-size: 11px; line-height: 18px; padding: 2px 5px; width: 70px; }
+
+*[data-nls-url].hover, .translator_box.locale_selected textarea { border-color: #3A87AD; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 6px #7ab5d3; }
+
+/* Modal window */
+.modal, .modal.fade.in { top: 0; left: 0; margin: 0; overflow: hidden; width: 100%; }
+
+/* box for each locale */
+.translator_box { float: left; overflow: hidden; }
+
+.translator_box:nth-of-type(3n+1) { clear: both; }
+
+#myModal label { font-weight: bold; margin: 10px 10px 0; padding: 5px; }
+
+.translator_box.locale_selected label { background: #3A87AD; border-radius: 3px 3px 0 0; color: #fff; }
+
+#myModal textarea { margin: 0 10px; resize: none; }
+
+.translator_box.locale_selected textarea { border-radius: 0 0 3px 3px; }
+
+/* action buttons in footer */
+.buttons { clear: both; height: 25px; margin: 0 auto; padding: 5px 0; text-align: center; width: 535px; }
+
+#btn_save, #btn_close { line-height: 23px; padding-top: 0; padding-bottom: 0; }
+
+#btn_save { float: left; }
+
+#btn_close { float: right; }
+
+.buttons ul { display: inline; margin: 0; padding: 0; }
+
+.buttons ul li { display: inline; list-style: none; }
+
+.buttons ul a { color: #fff; background: rgba(58, 135, 173, 0.6); border-radius: 3px; display: inline-block; line-height: 25px; margin: 0 5px; text-decoration: none; width: 25px; }
+
+.buttons ul a.selected, .buttons ul a:hover { background: #3A87AD; }

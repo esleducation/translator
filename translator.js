@@ -10,7 +10,7 @@
  *  a parent element (i.e. the form) to set back the new value
  *  in the calling element.
  *  The values sent back to the API are only the visible ones.
- * 
+ *
  *
  *  Made by ESL Web Team - esl-lpillonel
  *  2013-10-16
@@ -40,8 +40,6 @@
 				sv_SE : 'Svenska - Sverige',
 				cs_CZ : 'Česky - Česká republika',
 				nl_NL : 'Nederlands - Nederland'
-				//pt_PT : 'Português - Portugal',
-				//ru_RU : 'Русский - Россия'
 			},
 			presets : {
 				'FR' : ['fr_CH', 'fr_FR', 'fr_BE'],
@@ -60,7 +58,8 @@
 	function Translator ( element, options ) {
 		// DOM element calling the plugin
 		this.element  = element;
-		
+
+
 		if(this.checkRequire()) {
 			// Plugin settings
 			this.settings             = $.extend( {}, defaults, options );
@@ -87,7 +86,7 @@
 		checkRequire : function(){
 			return this.element.getAttribute('data-nls-url') && this.element.getAttribute('data-nls-property') ? true : false;
 		},
-		
+
 		init: function () {
 			// Create button
 			this.createOpenButton();
@@ -97,13 +96,13 @@
 		},
 
 		createOpenButton : function(){
-			this.openButton = $('<a class="btn nls-button" title="Translate"><i class="icon-language" /></a>');
+			this.openButton = $('<a class="btn nls-button" title="Translate"><i class="icon-language" /></a>').addClass(this.settings.btn_class);
 			if(this.settings.btn_target) {
 				$(this.element).next(this.settings.target).prepend(this.openButton);
 			} else {
 				$(this.element).after(this.openButton);
 			}
-			
+
 		},
 
 		setBehaviour : function(){
@@ -145,7 +144,7 @@
 
 		retrieveTranslations : function(){
 			var $element = $(this.element);
-			
+
 			// Get translation via ajax
 			$.ajax({
 				url : '//'+$element.data('nls-url')+'/'+$element.data('nls-property'),
@@ -212,7 +211,7 @@
 						// Define locale and id
 						var id = textarea.id ? textarea.id.substr(4) : null,
 							locale = textarea.name.substr(4);
-						
+
 						// Set object values
 						json[locale] = {};
 						json[locale][property] = textarea.value;
@@ -347,7 +346,7 @@
 
 				// Attach translation to sidebarItem
 				sidebarItem.data('translation', translationItem);
-				
+
 				// Set events
 				this.setTranslationEvents(translationItem, sidebarItem);
 
@@ -376,7 +375,7 @@
 		registerForSyncronisation : function(sidebarItem, init){
 			// Get translationItem
 			var translationItem = sidebarItem.data('translation');
-			
+
 			// Set btn
 			$('.sync', translationItem).addClass('active btn-danger').find('i').removeClass('icon-contract').addClass('icon-expand');
 
@@ -400,7 +399,7 @@
 
 			// Get translationItem
 			var translationItem = sidebarItem.data('translation');
-			
+
 			// Set btn
 			$('.sync', translationItem).removeClass('active btn-danger').find('i').removeClass('icon-expand').addClass('icon-contract');
 
@@ -409,7 +408,7 @@
 
 			// Remove event
 			textarea.unbind('keyup');
-			
+
 			// Remove from array
 			var pos = $.inArray(textarea[0], this.syncronisedTextareas);
 			if(pos > -1) {
@@ -423,7 +422,7 @@
 		enableTranslation : function(sidebarItem, init) {
 			// Prevent item to be enabled twice
 			if(sidebarItem.hasClass('active')) return;
-			
+
 			sidebarItem.addClass('active');
 
 			// Show translation
@@ -636,7 +635,7 @@
 
 			// Set items settings accordingly to new set
 			this.sidebarList.children().each(function(i, sidebarItem){
-				
+
 				sidebarItem = $(sidebarItem);
 
 				// Change visibility

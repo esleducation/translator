@@ -193,7 +193,7 @@
 					}
 
 					// Populate translation from caller
-					if(src_locale == locale) {
+					if(src_locale == locale && this.element.value) {
 						textarea.value = this.element.value;
 					}
 				}.bind(this));

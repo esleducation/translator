@@ -50,8 +50,13 @@
 			},
 			btn_target : '.buttons',
 			settings_sets_quantity : 2,
+			onOpenTranslationWindow : null,
 			onUpdateSuccess : null,
-			onUpdateError : null
+			onUpdateError : null,
+			headlessMode : false,
+			translations : null,
+			locale : null,
+			property : null
 	};
 
 	// Plugin constructor
@@ -59,10 +64,10 @@
 		// DOM element calling the plugin
 		this.element  = element;
 
+		// Plugin settings
+		this.settings = $.extend( {}, defaults, options );
 
 		if(this.checkRequire()) {
-			// Plugin settings
-			this.settings             = $.extend( {}, defaults, options );
 
 			// Declare vars
 			this.underlay             = null;
@@ -84,7 +89,7 @@
 	Translator.prototype = {
 
 		checkRequire : function(){
-			return this.element.getAttribute('data-nls-url') && this.element.getAttribute('data-nls-property') ? true : false;
+			return this.element.getAttribute('data-nls-url') && this.element.getAttribute('data-nls-property') || this.settings.headlessMode ? true : false;
 		},
 
 		init: function () {
@@ -116,6 +121,10 @@
 		},
 
 		openTranslationWindow : function(){
+			// Trigger
+			if(typeof this.settings.onOpenTranslationWindow == 'function')
+				this.settings.onOpenTranslationWindow.call(this.element, this);
+
 			// Read localStorage config on runtime
 			this.readUserSettings();
 
@@ -145,27 +154,31 @@
 		retrieveTranslations : function(){
 			var $element = $(this.element);
 
-			// Get translation via ajax
-			$.ajax({
-				url : '//'+$element.data('nls-url')+'/'+$element.data('nls-property'),
-				dataType: "json",
-				success : this.populateTranslations.bind(this),
-				error : function(){
-					alert('An error occured when retrieving translations. Please try agin');
+			if (this.settings.headlessMode) {
+				this.populateTranslations(this.settings.translations)
+			} else {
+				// Get translation via ajax
+				$.ajax({
+					url : '//'+$element.data('nls-url')+'/'+$element.data('nls-property'),
+					dataType: "json",
+					success : this.populateTranslations.bind(this),
+					error : function(){
+						alert('An error occured when retrieving translations. Please try agin');
 
-					// Enable window
-					this.enableWindow();
+						// Enable window
+						this.enableWindow();
 
-					this.closeUnderlay();
-				}.bind(this)
-			});
+						this.closeUnderlay();
+					}.bind(this)
+				});
+			}
 		},
 
 		populateTranslations : function(translations){
 			if(typeof translations == 'object') {
 				// Get this.element text
-				var src_locale = $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale'),
-					property = $(this.element).data('nls-property');
+				var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale'),
+					property = this.settings.property || $(this.element).data('nls-property');
 
 				// Retrieve textarea and populate them
 				$('textarea', this.translationsList).each(function(index, textarea){
@@ -196,7 +209,7 @@
 
 			// Create json var and get property
 			var $element = $(this.element),
-				property = $element.data('nls-property'),
+				property = this.settings.property || $element.data('nls-property'),
 				json = {};
 
 			// Retrieve values and construct json object
@@ -220,48 +233,63 @@
 				}
 			}.bind(this));
 
-			// Send the json object via ajax
-			$.ajax({
-				type : 'PUT',
-				url : '//'+ $element.data('nls-url')+'/'+$element.data('nls-property'),
-				dataType: "json",
-				data : json,
-				success : function(response){
-					if(response.success) {
-						// Get orinial locale
-						var locale = $(this.element).data('nls-locale') ||
-							         $(this.element).parents('[data-nls-locale]').data('nls-locale');
+			if (this.settings.headlessMode) {
+				// Get orinial locale
+				var locale = this.settings.locale
 
-						// Update original input
-						locale && this.element && (this.element.value = response.translations[locale] ? response.translations[locale][property] : '');
+				// Enable window
+				this.enableWindow();
 
-						// Enable window
-						this.enableWindow();
+				// Close window
+				this.closeUnderlay();
 
-						// Close window
-						this.closeUnderlay();
+				// Trigger onUpdateSuccess
+				if(typeof this.settings.onUpdateSuccess == 'function')
+					this.settings.onUpdateSuccess.call(this.element, json);
+			} else {
+				// Send the json object via ajax
+				$.ajax({
+					type : 'PUT',
+					url : '//'+ $element.data('nls-url')+'/'+$element.data('nls-property'),
+					dataType: "json",
+					data : json,
+					success : function(response){
+						if(response.success) {
+							// Get orinial locale
+							var locale = $(this.element).data('nls-locale') ||
+										 $(this.element).parents('[data-nls-locale]').data('nls-locale');
 
-						// Trigger onUpdateSuccess
-						if(typeof this.settings.onUpdateSuccess == 'function')
-							this.settings.onUpdateSuccess.call(this.element, response);
-					} else if(response.error) {
+							// Update original input
+							locale && this.element && (this.element.value = response.translations[locale] ? response.translations[locale][property] : '');
+
+							// Enable window
+							this.enableWindow();
+
+							// Close window
+							this.closeUnderlay();
+
+							// Trigger onUpdateSuccess
+							if(typeof this.settings.onUpdateSuccess == 'function')
+								this.settings.onUpdateSuccess.call(this.element, response);
+						} else if(response.error) {
+							alert('An error occured when saving translations. Please try agin');
+
+							// Enable window
+							this.enableWindow();
+
+							// Trigger onUpdateError
+							if(typeof this.settings.onUpdateError == 'function')
+								this.settings.onUpdateError.call(this.element, response);
+						}
+					}.bind(this),
+					error : function(){
 						alert('An error occured when saving translations. Please try agin');
 
 						// Enable window
 						this.enableWindow();
-
-						// Trigger onUpdateError
-						if(typeof this.settings.onUpdateError == 'function')
-							this.settings.onUpdateError.call(this.element, response);
-					}
-				}.bind(this),
-				error : function(){
-					alert('An error occured when saving translations. Please try agin');
-
-					// Enable window
-					this.enableWindow();
-				}.bind(this)
-			});
+					}.bind(this)
+				});
+			}
 		},
 
 		attachTranslationWindow : function(){

@@ -56,7 +56,8 @@
 			headlessMode : false,
 			translations : null,
 			locale : null,
-			property : null
+			property : null,
+			smallTextarea : false
 	};
 
 	// Plugin constructor
@@ -342,6 +343,12 @@
 					this.overlay = $('.nls-overlay', this.translatorWindow);
 					this.presetsButtonsGroup = $('.btn-group-presets', this.translatorWindow);
 				}
+			}
+
+			if(this.settings.smallTextarea === true) {
+				this.translatorWindow.addClass('small-textarea');
+			} else {
+				this.translatorWindow.removeClass('small-textarea');
 			}
 		},
 

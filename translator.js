@@ -57,7 +57,8 @@
 			translations : null,
 			locale : null,
 			property : null,
-			smallTextarea : false
+			smallTextarea : false,
+			imgMode : false
 	};
 
 	// Plugin constructor
@@ -115,6 +116,9 @@
 			this.openButton.bind('click', function(){
 				// Underlay
 				this.addUnderlay();
+
+				// Hard reset
+				this.syncronisedImgs = [];
 
 				// Create translation window
 				this.openTranslationWindow();
@@ -177,27 +181,43 @@
 
 		populateTranslations : function(translations){
 			if(typeof translations == 'object') {
-				// Get this.element text
-				var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale'),
-					property = this.settings.property || $(this.element).data('nls-property');
+				// Get locale & property
+				var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale');
+				var property = this.settings.property || $(this.element).data('nls-property');
 
-				// Retrieve textarea and populate them
-				$('textarea', this.translationsList).each(function(index, textarea){
-					var locale = textarea.name.substr(4, 5);
+				if (this.settings.imgMode) {
+					$('img', this.translationsList).each(function(index, img){
+						var locale = img.name.substr(4, 5);
 
-					// Set traduction and id
-					if(translations[locale]) {
-						if(translations[locale][property]) {
-							textarea.value = translations[locale][property];
+						// Set traduction and id
+						if(translations[locale]) {
+							if(translations[locale][property]) {
+								img.src = translations[locale][property];
+							}
+							img.id = 'nls-'+translations[locale].id;
+						} else {
+							$(img).addClass('hidden');
 						}
-						textarea.id = 'nls-'+translations[locale].id;
-					}
+					});
+				} else{
+					// Retrieve textarea and populate them
+					$('textarea', this.translationsList).each(function(index, textarea){
+						var locale = textarea.name.substr(4, 5);
 
-					// Populate translation from caller
-					if(src_locale == locale && this.element.value) {
-						textarea.value = this.element.value;
-					}
-				}.bind(this));
+						// Set traduction and id
+						if(translations[locale]) {
+							if(translations[locale][property]) {
+								textarea.value = translations[locale][property];
+							}
+							textarea.id = 'nls-'+translations[locale].id;
+						}
+
+						// Populate translation from caller
+						if(src_locale == locale && this.element.value) {
+							textarea.value = this.element.value;
+						}
+					}.bind(this));
+				};
 			}
 
 			// Enable window
@@ -217,19 +237,36 @@
 			this.sidebarList.children().each(function(index, sidebarItem){
 
 				if($(sidebarItem).hasClass('active')) {
-					// Retrieve textarea
-					var textarea = $('textarea', $(sidebarItem).data('translation'))[0];
+					if (this.settings.imgMode) {
+						// Retrieve img
+						var img = $('img', $(sidebarItem).data('translation')).get(0);
 
-					// Save only languages with an actual content
-					if(textarea.id || (textarea.value !== '' && ! textarea.id)) {
-						// Define locale and id
-						var id = textarea.id ? textarea.id.substr(4) : null,
-							locale = textarea.name.substr(4);
+						// Save only image with a content
+						if(img.id || (img.className != 'hidden' && ! img.id)) {
+							// Define locale and id
+							var id = img.id ? img.id.substr(4) : null,
+								locale = img.name.substr(4);
 
-						// Set object values
-						json[locale] = {};
-						json[locale][property] = textarea.value;
-						if(id) json[locale]['id'] = id;
+							// Set object values
+							json[locale] = {};
+							json[locale][property] = img.src;
+							if(id) json[locale]['id'] = id;
+						}
+					} else {
+						// Retrieve textarea
+						var textarea = $('textarea', $(sidebarItem).data('translation'))[0];
+
+						// Save only languages with an actual content
+						if(textarea.id || (textarea.value !== '' && ! textarea.id)) {
+							// Define locale and id
+							var id = textarea.id ? textarea.id.substr(4) : null,
+								locale = textarea.name.substr(4);
+
+							// Set object values
+							json[locale] = {};
+							json[locale][property] = textarea.value;
+							if(id) json[locale]['id'] = id;
+						}
 					}
 				}
 			}.bind(this));
@@ -295,60 +332,56 @@
 
 		attachTranslationWindow : function(){
 			if( ! this.translatorWindow) {
-				// Create translation window or retrieve it if needed
-				this.translatorWindow = $('#nls-window-wrapper');
-				if( ! this.translatorWindow.length) {
-					this.translatorWindow = $([
-						'<div id="nls-window-wrapper">',
-							'<div class="nls-centerer-cell">',
-								'<div id="nls-window">',
-									'<div class="nls-container">',
-										'<section class="nls-lang-list">',
-											'<div class="nls-lang-list-slider" />',
-										'</section>',
-										'<aside>',
-											'<ul />',
-										'</aside>',
-										'<section class="navbar">',
-											'<div class="btn-group btn-group-sets">',
-												'<button type="button" class="btn"><i class="icon-cog" /> 1</button>',
-												'<button type="button" class="btn"><i class="icon-cog" /> 2</button>',
-											'</div>',
-											'<div class="btn-group btn-group-presets"></div>',
-											'<button class="btn btn-cancel"><i class="icon-cross" /> Cancel</button>',
-											'<button class="btn btn-primary btn-save"><i class="icon-checkmark" /> Save</button>',
-										'</section>',
-										'<div class="nls-overlay" />',
-									'</div>',
+				this.translatorWindow = $([
+					'<div id="nls-window-wrapper">',
+						'<div class="nls-centerer-cell">',
+							'<div id="nls-window">',
+								'<div class="nls-container">',
+									'<section class="nls-lang-list">',
+										'<div class="nls-lang-list-slider" />',
+									'</section>',
+									'<aside>',
+										'<ul />',
+									'</aside>',
+									'<section class="navbar">',
+										'<div class="btn-group btn-group-sets">',
+											'<button type="button" class="btn"><i class="icon-cog" /> 1</button>',
+											'<button type="button" class="btn"><i class="icon-cog" /> 2</button>',
+										'</div>',
+										'<div class="btn-group btn-group-presets"></div>',
+										'<button class="btn btn-cancel"><i class="icon-cross" /> Cancel</button>',
+										'<button class="btn btn-primary btn-save"><i class="icon-checkmark" /> Save</button>',
+									'</section>',
+									'<div class="nls-overlay" />',
 								'</div>',
 							'</div>',
-						'</div>'
-					].join(''));
+						'</div>',
+					'</div>'
+				].join(''));
 
-					// Attach to underlay
-					this.underlay.append(this.translatorWindow);
-
-					// Define interface element vars
-					this.sidebarList = $('aside ul', this.translatorWindow);
-					this.translationsList = $('.nls-lang-list-slider', this.translatorWindow);
-					this.overlay = $('.nls-overlay', this.translatorWindow);
-					this.presetsButtonsGroup = $('.btn-group-presets', this.translatorWindow);
-
-					// Set general controls event
-					this.setTranslatorWindowEvents();
+				if(this.settings.smallTextarea === true) {
+					this.translatorWindow.addClass('small-textarea');
 				} else {
-					// Define interface element vars
-					this.sidebarList = $('aside ul', this.translatorWindow);
-					this.translationsList = $('.nls-lang-list-slider', this.translatorWindow);
-					this.overlay = $('.nls-overlay', this.translatorWindow);
-					this.presetsButtonsGroup = $('.btn-group-presets', this.translatorWindow);
+					this.translatorWindow.removeClass('small-textarea');
 				}
-			}
 
-			if(this.settings.smallTextarea === true) {
-				this.translatorWindow.addClass('small-textarea');
-			} else {
-				this.translatorWindow.removeClass('small-textarea');
+				if(this.settings.imgMode === true) {
+					this.translatorWindow.addClass('img-mode');
+				} else {
+					this.translatorWindow.removeClass('img-mode');
+				}
+
+				// Attach to underlay
+				this.underlay.append(this.translatorWindow);
+
+				// Define interface element vars
+				this.sidebarList = $('aside ul', this.translatorWindow);
+				this.translationsList = $('.nls-lang-list-slider', this.translatorWindow);
+				this.overlay = $('.nls-overlay', this.translatorWindow);
+				this.presetsButtonsGroup = $('.btn-group-presets', this.translatorWindow);
+
+				// Set general controls event
+				this.setTranslatorWindowEvents();
 			}
 		},
 
@@ -364,20 +397,39 @@
 					'</li>'
 				].join(''));
 
-				// Prepare translationItem
-				var translationItem = $([
-					'<div class="item">',
-						'<div class="well">',
+				if (this.settings.imgMode) {
+					// Prepare translationItem
+					var translationItem = $([
+						'<div class="item">',
 							'<label>',
 								'<span class="legend">',
 									language+' ('+locale+')',
 								'</span>',
-								'<textarea rows="4" name="nls-'+locale+'"></textarea>',
+								'<div class="preview">',
+									'<img src="#" name="nls-'+locale+'">',
+									'<div class="dropzone"></div>',
+									'<button class="btn btn-small btn-danger delete"><i class=" icon-remove" /></button>',
+								'</div>',
 							'</label>',
 							'<button class="btn btn-small sync"><i class=" icon-contract" /> Sync</button>',
-						'</div>',
-					'</div>'
-				].join(''));
+						'</div>'
+					].join(''));
+				} else {
+					// Prepare translationItem
+					var translationItem = $([
+						'<div class="item">',
+							'<div class="well">',
+								'<label>',
+									'<span class="legend">',
+										language+' ('+locale+')',
+									'</span>',
+									'<textarea rows="4" name="nls-'+locale+'"></textarea>',
+								'</label>',
+								'<button class="btn btn-small sync"><i class=" icon-contract" /> Sync</button>',
+							'</div>',
+						'</div>'
+					].join(''));
+				}
 
 				// Attach translation to sidebarItem
 				sidebarItem.data('translation', translationItem);
@@ -414,20 +466,31 @@
 			// Set btn
 			$('.sync', translationItem).addClass('active btn-danger').find('i').removeClass('icon-contract').addClass('icon-expand');
 
-			// Get textarea
-			var textarea = $('textarea', translationItem);
+			if (this.settings.imgMode) {
+				// Get img
+				var img = $('img', translationItem);
 
-			// Skip if already registered
-			if( $.inArray(textarea[0], this.syncronisedTextareas) != -1) return;
+				// Skip if already registered
+				if( $.inArray(img[0], this.syncronisedImgs) != -1) return;
 
-			// Register
-			this.syncronisedTextareas.push(textarea[0]);
-			textarea.bind('keyup', function(e){
-				this.syncroniseTextareas(e.currentTarget);
-			}.bind(this));
+				// Register
+				this.syncronisedImgs.push(img[0]);
+			} else {
+				// Get textarea
+				var textarea = $('textarea', translationItem);
 
-			// Save user settings
-			if( ! init && typeof this.userSettings.active_set == 'number') this.saveUsersettings(sidebarItem, { syncronised : true });
+				// Skip if already registered
+				if( $.inArray(textarea[0], this.syncronisedTextareas) != -1) return;
+
+				// Register
+				this.syncronisedTextareas.push(textarea[0]);
+				textarea.bind('keyup', function(e){
+					this.syncroniseTextareas(e.currentTarget);
+				}.bind(this));
+
+				// Save user settings
+				if( ! init && typeof this.userSettings.active_set == 'number') this.saveUsersettings(sidebarItem, { syncronised : true });
+			}
 		},
 
 		unregisterForSyncronisation : function(sidebarItem, init){
@@ -438,20 +501,31 @@
 			// Set btn
 			$('.sync', translationItem).removeClass('active btn-danger').find('i').removeClass('icon-expand').addClass('icon-contract');
 
-			// Get textarea
-			var textarea = $('textarea', translationItem);
+			if (this.settings.imgMode) {
+				// Get img
+				var img = $('img', translationItem);
 
-			// Remove event
-			textarea.unbind('keyup');
+				// Remove from array
+				var pos = $.inArray(img[0], this.syncronisedImgs);
+				if(pos > -1) {
+					this.syncronisedImgs.splice(pos, 1);
+				}
+			} else {
+				// Get textarea
+				var textarea = $('textarea', translationItem);
 
-			// Remove from array
-			var pos = $.inArray(textarea[0], this.syncronisedTextareas);
-			if(pos > -1) {
-				this.syncronisedTextareas.splice(pos, 1);
+				// Remove event
+				textarea.unbind('keyup');
+
+				// Remove from array
+				var pos = $.inArray(textarea[0], this.syncronisedTextareas);
+				if(pos > -1) {
+					this.syncronisedTextareas.splice(pos, 1);
+				}
+
+				// Save user settings
+				if( ! init && typeof this.userSettings.active_set == 'number') this.saveUsersettings(sidebarItem, { syncronised : false });
 			}
-
-			// Save user settings
-			if( ! init && typeof this.userSettings.active_set == 'number') this.saveUsersettings(sidebarItem, { syncronised : false });
 		},
 
 		enableTranslation : function(sidebarItem, init) {
@@ -574,6 +648,59 @@
 					this.unregisterForSyncronisation(sidebarItem);
 				}
 			}.bind(this));
+
+			// Image events
+			if (this.settings.imgMode) {
+				// Drop events
+				var dropzone = $('.dropzone', translationItem);
+
+				dropzone
+					.on('dragenter', function(){
+						dropzone.addClass('active');
+						return false;
+					})
+					.on('dragover', function(e){
+						dropzone.addClass('active');
+						e.preventDefault();
+						e.stopPropagation();
+						return false;
+					})
+					.on('dragleave', function(e){
+						dropzone.removeClass('active');
+						e.preventDefault();
+						e.stopPropagation();
+						return false;
+					})
+					.on('drop', function(e){
+						dropzone.removeClass('active');
+
+						if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files.length) {
+							var file         = e.originalEvent.dataTransfer.files[0];
+							var allowedTypes = ['image/jpeg'];
+							var img          = $('img', translationItem);
+
+							if ($.inArray(file.type, allowedTypes) > -1) {
+								var reader = new FileReader();
+								reader.onloadend = function(){
+									img.removeClass('hidden').attr('src',reader.result);
+
+									if ($.inArray(img[0], this.syncronisedImgs) > -1) {
+										this.syncronisedImgs.forEach(function(entry){
+											if (img[0] != entry) {
+												$(entry).removeClass('hidden').attr('src',reader.result);
+											}
+										});
+									};
+								}.bind(this)
+								reader.readAsDataURL(file);
+							}
+						}
+
+						e.preventDefault();
+						e.stopPropagation();
+						return false;
+					}.bind(this));
+			}
 		},
 
 		setTranslatorWindowEvents : function(){
@@ -613,7 +740,7 @@
 			$('.btn-cancel', this.translatorWindow).bind('click', this.closeUnderlay.bind(this));
 
 			// Escape key
-			$(document).bind('keyup.Translator', function(e){
+			$(document).on('keyup.Translator', function(e){
 				if(e.keyCode == 27) this.closeUnderlay();
 			}.bind(this));
 		},
@@ -722,13 +849,12 @@
 					// Hide window
 					this.underlay.hide();
 
-					// Empty both list
-					this.sidebarList.empty();
-					this.translationsList.empty();
-					this.presetsButtonsGroup.empty();
+					// Remove window
+					this.translatorWindow.remove();
+					delete this.translatorWindow;
 
-					// Unbind click on save
-					$('.btn-save', this.translatorWindow).unbind('click');
+					// Remove event
+					$(document).off('keyup.Translator');
 				}.bind(this), 500);
 			}
 		}

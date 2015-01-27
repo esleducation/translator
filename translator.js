@@ -653,7 +653,6 @@
 			if (this.settings.imgMode) {
 				// Drop events
 				var dropzone = $('.dropzone', translationItem);
-
 				dropzone
 					.on('dragenter', function(){
 						dropzone.addClass('active');
@@ -700,6 +699,12 @@
 						e.stopPropagation();
 						return false;
 					}.bind(this));
+
+				// Delete event
+				$('.delete', translationItem).on('click', function(e){
+					e.preventDefault();
+					$('img', translationItem).addClass('hidden').removeAttr('src');
+				})
 			}
 		},
 

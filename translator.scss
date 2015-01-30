@@ -79,6 +79,10 @@ $button-bg : #999;
 			.item {
 				display: none;
 
+				.img-mode & {
+					overflow: hidden;
+				}
+
 				.well {
 					overflow: hidden;
 					padding: 15px 19px;

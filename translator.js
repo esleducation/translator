@@ -783,7 +783,7 @@
 			// Reorder items
 			$.each(this.userSettings.sets[set_index], function(index, itemSettings){
 				var item = $('[data-nls-locale="'+itemSettings.locale+'"]', this.sidebarList).appendTo(this.sidebarList);
-				item.data('translation').appendTo(this.translationsList);
+				if (item.length) item.data('translation').appendTo(this.translationsList);
 			}.bind(this));
 
 			// Save settings as json in localStorage

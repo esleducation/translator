@@ -114,6 +114,7 @@
 
 		setBehaviour : function(){
 			this.openButton.bind('click', function(){
+
 				// Underlay
 				this.addUnderlay();
 
@@ -180,45 +181,43 @@
 		},
 
 		populateTranslations : function(translations){
-			if(typeof translations == 'object') {
-				// Get locale & property
-				var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale');
-				var property = this.settings.property || $(this.element).data('nls-property');
+			// Get locale & property
+			var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale');
+			var property = this.settings.property || $(this.element).data('nls-property');
 
-				if (this.settings.imgMode) {
-					$('img', this.translationsList).each(function(index, img){
-						var locale = img.name.substr(4, 5);
+			if (this.settings.imgMode) {
+				$('img', this.translationsList).each(function(index, img){
+					var locale = img.name.substr(4, 5);
 
-						// Set traduction and id
-						if(translations[locale]) {
-							if(translations[locale][property]) {
-								img.src = translations[locale][property];
-							}
-							img.id = 'nls-'+translations[locale].id;
-						} else {
-							$(img).addClass('hidden');
+					// Set traduction and id
+					if(translations && translations[locale]) {
+						if(translations[locale][property] && translations[locale][property] != '') {
+							img.src = translations[locale][property];
 						}
-					});
-				} else{
-					// Retrieve textarea and populate them
-					$('textarea', this.translationsList).each(function(index, textarea){
-						var locale = textarea.name.substr(4, 5);
+						img.id = 'nls-'+translations[locale].id;
+					} else {
+						$(img).addClass('hidden');
+					}
+				});
+			} else {
+				// Retrieve textarea and populate them
+				$('textarea', this.translationsList).each(function(index, textarea){
+					var locale = textarea.name.substr(4, 5);
 
-						// Set traduction and id
-						if(translations[locale]) {
-							if(translations[locale][property]) {
-								textarea.value = translations[locale][property];
-							}
-							textarea.id = 'nls-'+translations[locale].id;
+					// Set traduction and id
+					if(translations && translations[locale]) {
+						if(translations[locale][property]) {
+							textarea.value = translations[locale][property];
 						}
+						textarea.id = 'nls-'+translations[locale].id;
+					}
 
-						// Populate translation from caller
-						if(src_locale == locale && this.element.value) {
-							textarea.value = this.element.value;
-						}
-					}.bind(this));
-				};
-			}
+					// Populate translation from caller
+					if(src_locale == locale && this.element.value) {
+						textarea.value = this.element.value;
+					}
+				}.bind(this));
+			};
 
 			// Enable window
 			this.enableWindow();

@@ -161,13 +161,17 @@
 			var $element = $(this.element);
 
 			if (this.settings.headlessMode) {
-				this.populateTranslations(this.settings.translations)
+				this.translations = this.settings.translations
+				this.populateTranslations();
 			} else {
 				// Get translation via ajax
 				$.ajax({
 					url : '//'+$element.data('nls-url')+'/'+$element.data('nls-property'),
 					dataType: "json",
-					success : this.populateTranslations.bind(this),
+					success : function(translations){
+						this.translations = translations;
+						this.populateTranslations();
+					}.bind(this),
 					error : function(){
 						alert('An error occured when retrieving translations. Please try agin');
 
@@ -180,7 +184,7 @@
 			}
 		},
 
-		populateTranslations : function(translations){
+		populateTranslations : function(){
 			// Get locale & property
 			var src_locale = this.settings.locale || $(this.element).data('nls-locale') || $(this.element).parents('[data-nls-locale]').data('nls-locale');
 			var property = this.settings.property || $(this.element).data('nls-property');
@@ -190,26 +194,29 @@
 					var locale = img.name.substr(4, 5);
 
 					// Set traduction and id
-					if(translations && translations[locale]) {
-						if(translations[locale][property] && translations[locale][property] != '') {
-							img.src = translations[locale][property];
+					if(this.translations && this.translations[locale]) {
+
+						if(this.translations[locale][property] && this.translations[locale][property] != '') {
+							img.src = this.translations[locale][property];
 						}
-						img.id = 'nls-'+translations[locale].id;
+						img.id = 'nls-'+this.translations[locale].id;
 					} else {
 						$(img).addClass('hidden');
 					}
-				});
+				}.bind(this));
 			} else {
 				// Retrieve textarea and populate them
 				$('textarea', this.translationsList).each(function(index, textarea){
 					var locale = textarea.name.substr(4, 5);
 
 					// Set traduction and id
-					if(translations && translations[locale]) {
-						if(translations[locale][property]) {
-							textarea.value = translations[locale][property];
+					if(this.translations && this.translations[locale]) {
+						if(this.translations[locale][property]) {
+							textarea.value = this.translations[locale][property];
 						}
-						textarea.id = 'nls-'+translations[locale].id;
+						if(this.translations[locale].id) {
+							textarea.id = 'nls-'+this.translations[locale].id;
+						}
 					}
 
 					// Populate translation from caller
@@ -229,8 +236,7 @@
 
 			// Create json var and get property
 			var $element = $(this.element),
-				property = this.settings.property || $element.data('nls-property'),
-				json = {};
+				property = this.settings.property || $element.data('nls-property');
 
 			// Retrieve values and construct json object
 			this.sidebarList.children().each(function(index, sidebarItem){
@@ -247,24 +253,28 @@
 								locale = img.name.substr(4);
 
 							// Set object values
-							json[locale] = {};
-							json[locale][property] = img.src;
-							if(id) json[locale]['id'] = id;
+							this.translations = this.translations || {};
+							this.translations[locale] = this.translations[locale] || {};
+							this.translations[locale][property] = img.src;
+							if(id) this.translations[locale]['id'] = id;
 						}
 					} else {
 						// Retrieve textarea
 						var textarea = $('textarea', $(sidebarItem).data('translation'))[0];
 
-						// Save only languages with an actual content
-						if(textarea.id || (textarea.value !== '' && ! textarea.id)) {
-							// Define locale and id
-							var id = textarea.id ? textarea.id.substr(4) : null,
-								locale = textarea.name.substr(4);
+						// Define locale and id
+						var id = textarea.id ? textarea.id.substr(4) : null,
+							locale = textarea.name.substr(4);
 
+						// Save only languages with an actual content
+						if(id || (textarea.value !== '' && ! textarea.id)) {
 							// Set object values
-							json[locale] = {};
-							json[locale][property] = textarea.value;
-							if(id) json[locale]['id'] = id;
+							this.translations = this.translations || {};
+							this.translations[locale] = this.translations[locale] || {};
+							this.translations[locale][property] = textarea.value;
+							if(id) this.translations[locale]['id'] = id;
+						} else if(this.translations && this.translations[locale]) {
+							delete this.translations[locale][property];
 						}
 					}
 				}
@@ -282,14 +292,17 @@
 
 				// Trigger onUpdateSuccess
 				if(typeof this.settings.onUpdateSuccess == 'function')
-					this.settings.onUpdateSuccess.call(this.element, json);
+					this.settings.onUpdateSuccess.call(this.element, this.translations);
+
+				// Clear translations
+				delete this.translations;
 			} else {
 				// Send the json object via ajax
 				$.ajax({
 					type : 'PUT',
 					url : '//'+ $element.data('nls-url')+'/'+$element.data('nls-property'),
 					dataType: "json",
-					data : json,
+					data : this.translations,
 					success : function(response){
 						if(response.success) {
 							// Get orinial locale
@@ -308,6 +321,9 @@
 							// Trigger onUpdateSuccess
 							if(typeof this.settings.onUpdateSuccess == 'function')
 								this.settings.onUpdateSuccess.call(this.element, response);
+
+							// Clear translations
+							delete this.translations;
 						} else if(response.error) {
 							alert('An error occured when saving translations. Please try agin');
 
@@ -765,14 +781,14 @@
 				var data = this.currentDataForItem(sidebarItem);
 
 				// Change visibility
-				if(data.enabled) {
+				if(data && data.enabled) {
 					this.enableTranslation(sidebarItem, 'init');
 				} else {
 					this.disableTranslation(sidebarItem, 'init');
 				}
 
 				// Change syncronisation
-				if(data.syncronised) {
+				if(data && data.syncronised) {
 					this.registerForSyncronisation(sidebarItem, 'do not save in localStorage');
 				} else {
 					this.unregisterForSyncronisation(sidebarItem, 'do not save in localStorage');

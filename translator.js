@@ -1,5 +1,5 @@
 /*
- *  Translator - v2.0.5
+ *  Translator - v2.0.6
  *  jQuery plugin to provide quick translation interface
  *  http://www.esl.ch
  *

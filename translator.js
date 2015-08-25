@@ -1,5 +1,5 @@
 /*
- *  Translator - v2.0.6
+ *  Translator - v2.0.7
  *  jQuery plugin to provide quick translation interface
  *  http://www.esl.ch
  *
@@ -15,7 +15,19 @@
  *  Made by ESL Web Team - esl-lpillonel
  *  2013-10-16
  */
-;(function ( $, window, document, undefined ) {
+
+;(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define(['jquery'], factory);
+	} else if (typeof exports === 'object') {
+		// Node/CommonJS
+		factory(require('jquery'));
+	} else {
+		// Browser globals
+		factory(jQuery);
+	}
+}(function ($, undefined) {
 
 	// ECMAScript 5 strict mode
 	"use strict";
@@ -114,16 +126,19 @@
 
 		setBehaviour : function(){
 			this.openButton.bind('click', function(){
-
-				// Underlay
-				this.addUnderlay();
-
-				// Hard reset
-				this.syncronisedImgs = [];
-
-				// Create translation window
-				this.openTranslationWindow();
+				this.open();
 			}.bind(this));
+		},
+
+		open : function(){
+			// Underlay
+			this.addUnderlay();
+
+			// Hard reset
+			this.syncronisedImgs = [];
+
+			// Create translation window
+			this.openTranslationWindow();
 		},
 
 		openTranslationWindow : function(){
@@ -889,4 +904,7 @@
 			}
 		});
 	};
-})(jQuery, window, document);
+
+	// return the translator object
+	return Translator;
+}));
